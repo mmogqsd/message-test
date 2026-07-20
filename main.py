@@ -51,6 +51,7 @@ class packet:
 
 udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 udp_sock.bind(('', upd_port))
 mreq = struct.pack("4si", socket.inet_aton(mcast_group), socket.INADDR_ANY)
 udp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
@@ -80,7 +81,7 @@ def stop_server():
 def get_encryption_key():
     while True:
         try:
-            chatroom = input("enter a chatroom? y/n: ")
+            chatroom = input("enter a specific chatroom? y/n: ")
         except KeyboardInterrupt:
             close_sockets()
             sys.exit
@@ -88,7 +89,7 @@ def get_encryption_key():
         if chatroom == 'y':
             pass
         elif chatroom == 'n':
-            return "EpsteinIsMyLordAndSaviour" #default encryption key
+            return "u9o8769907y5d66f7b"
         else: 
             print("invalid response, try again") 
             continue
@@ -98,7 +99,7 @@ def get_encryption_key():
         if os.path.getsize(key_file) == 0:
             has_prev_keys = False
         try:
-            key_usage = input("use a previous room key? y/n: ")
+            key_usage = input("use a previous room? y/n: ")
         except KeyboardInterrupt:
             close_sockets()
             sys.exit
@@ -120,7 +121,7 @@ def get_encryption_key():
             check = None
             while True:
                 try:
-                    choice = input("which key would you like to use? ")
+                    choice = input("which room would you like to join? ")
 
                 except KeyboardInterrupt:
                     close_sockets()
@@ -146,7 +147,7 @@ def get_encryption_key():
             encryption_key = None
             while True:
                 try:
-                    encryption_key = str(input("encryption key / room: ")).strip()
+                    encryption_key = str(input("room code: ")).strip()
                 except KeyboardInterrupt:
                     close_sockets()
                     sys.exit
@@ -193,10 +194,12 @@ def listen_udp(prompt, name):
         if address and address not in IPs_Found: #and address != self_ip:
             IPs_Found.append(address)
             data = pickle.loads(data)
-            print("received UDP packet")
-            print(data.key, encryption_key)
+            if debug:
+                print("received UDP packet")
+                print(data.key, encryption_key)
             if data.key == encryption_key: 
-                print("received UDP packet matches key")
+                if debug:
+                    ("received UDP packet matches key")
                 data.name = encrypt(data.name, data.key)
                 data.port = encrypt(str(data.port), data.key)
                 data.type = encrypt(data.type, data.key)
@@ -394,7 +397,8 @@ def server(prompt, name):
                 print("[|] person found")
 
             if address[0] == self_ip:
-                print("[|] person is me \n")
+                if debug:
+                    print("[|] person is me \n")
                 gateway_conn.send(active_conn_code.encode())
                 gateway_conn.close()
                 return
