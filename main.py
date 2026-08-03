@@ -91,13 +91,13 @@ def listen_udp(prompt, name):
             break
 
         address = address[0]
-        if address and address not in IPs_Found :# and address != self_ip:
+        if address and address not in IPs_Found and address != self_ip:
             IPs_Found.append(address)
             data = pickle.loads(data)
             print("received UDP packet")
-            print(data.key, encryption_key)
+            # print(data.key, encryption_key)
             if data.key == encryption_key: 
-                print("received UDP packet matches key")
+                #print("received UDP packet matches key")
                 data.name = encrypt(data.name, data.key)
                 data.port = encrypt(str(data.port), data.key)
                 data.type = encrypt(data.type, data.key)
@@ -233,8 +233,13 @@ def connect(address, data, prompt, local_name):
         sock.settimeout(4)
         sock.connect((address, port))
         
+        print("receiving server response")
         server_response = sock.recv(1024).decode()
         server_response = encrypt(server_response, encryption_key)
+        
+        #temporary debug
+        if debug:
+            print(server_response)
 
         if server_response == "ALREADY_CONNECTED":
             return False
@@ -330,6 +335,8 @@ def server(prompt, name):
             code = str(code)
             code = encrypt(code, encryption_key)
             
+            print("server sent response")
+
             gateway_conn.send(code.encode())
             gateway_conn.close()
             
@@ -340,6 +347,7 @@ def server(prompt, name):
                     dedicated_sock.listen(1)
                     
                     conn, addr = dedicated_sock.accept()
+
                     
                     conn.send(name.encode())
                     nameO = conn.recv(1024).decode()
@@ -353,7 +361,7 @@ def server(prompt, name):
 
             threading.Thread(target=dedicated_listener, args=(given_port,), daemon=True).start()
 
-        except Exception as e:
+        except Exception:
             pass
 
 
