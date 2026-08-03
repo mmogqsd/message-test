@@ -77,9 +77,7 @@ def stop_server():
 
 #gets encryption key (currently just setting to 1 encryption key thats default cuz chatrooms have been buggy for now)
 def get_encryption_key():
-    return "EpsteinMogsDiddyAllDay978675645342312u78io0r"
-        
-
+    return "97u867t564r534w231q2u7e8io0r"
 
 #udp listening on multicast group
 def listen_udp(prompt, name):
