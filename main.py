@@ -35,7 +35,6 @@ ttl = 10
 project_dir = os.path.dirname(os.path.abspath(__file__))
 
 config_path = os.path.join(project_dir, 'config.json')
-key_file = os.path.join(project_dir, 'last_keys.txt')
 
 
 
@@ -51,7 +50,6 @@ class packet:
 
 udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
 udp_sock.bind(('', upd_port))
 mreq = struct.pack("4si", socket.inet_aton(mcast_group), socket.INADDR_ANY)
 udp_sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
@@ -77,107 +75,9 @@ def stop_server():
     if server_sock and server_sock != None:
         server_sock.close()
 
-#ngets encryption key stuff
+#gets encryption key (currently just setting to 1 encryption key thats default cuz chatrooms have been buggy for me)
 def get_encryption_key():
-    while True:
-        try:
-            chatroom = input("enter a specific chatroom? y/n: ")
-        except KeyboardInterrupt:
-            close_sockets()
-            sys.exit
-
-        if chatroom == 'y':
-            pass
-        elif chatroom == 'n':
-            return "u9o8769907y5d66f7b"
-        else: 
-            print("invalid response, try again") 
-            continue
-
-        lines = []
-        has_prev_keys = True
-        if os.path.getsize(key_file) == 0:
-            has_prev_keys = False
-        try:
-            key_usage = input("use a previous room? y/n: ")
-        except KeyboardInterrupt:
-            close_sockets()
-            sys.exit
-
-        if key_usage == "y" and has_prev_keys == True:
-        
-            with open(key_file, "r") as file:
-                for line_index, line in enumerate(file):
-                    if line_index >= 5:
-                        break
-
-                    lines.append(line.strip())
-
-            index = 1
-            for line in lines:
-                print(f"{index} – {line}")
-                index += 1
-
-            check = None
-            while True:
-                try:
-                    choice = input("which room would you like to join? ")
-
-                except KeyboardInterrupt:
-                    close_sockets()
-                    sys.exit
-
-                if choice.isdigit and int(choice) > 0:
-                    with open(key_file, 'r') as f:
-                        for i, _ in enumerate(f, 1):
-                            if i == int(choice):
-                                encryption_key = _
-                                check = True
-
-                    if check == True:
-                        return encryption_key
-                    else:
-                        print("choice does not correspond to a key number OR is outside the range")
-                
-                else:
-                    print("choice does not correspond to a key number OR is outside the range ")
-                            
-        elif key_usage == "n":
-
-            encryption_key = None
-            while True:
-                try:
-                    encryption_key = str(input("room code: ")).strip()
-                except KeyboardInterrupt:
-                    close_sockets()
-                    sys.exit
-
-                if encryption_key != "":
-                    break
-                print("invalid response, try again")
-
-            existing_keys = []
-            if os.path.exists(key_file):
-                with open(key_file, "r") as file:
-                    existing_keys = [line.strip() for line in file if line.strip()]
-
-            if encryption_key in existing_keys:
-                existing_keys.remove(encryption_key)
-
-            existing_keys.insert(0, encryption_key)
-
-            existing_keys = existing_keys[:5]
-
-            with open(key_file, "w") as file:
-                for key in existing_keys:
-                    file.write(f"{key}\n")
-
-            return encryption_key
-
-
-
-        else:
-            print("try again, invalid response")
+    return "EpsteinMogsDiddyAllDay978675645342312u78io0r"
         
 
 
@@ -191,15 +91,13 @@ def listen_udp(prompt, name):
             break
 
         address = address[0]
-        if address and address not in IPs_Found: #and address != self_ip:
+        if address and address not in IPs_Found :# and address != self_ip:
             IPs_Found.append(address)
             data = pickle.loads(data)
-            if debug:
-                print("received UDP packet")
-                print(data.key, encryption_key)
+            print("received UDP packet")
+            print(data.key, encryption_key)
             if data.key == encryption_key: 
-                if debug:
-                    ("received UDP packet matches key")
+                print("received UDP packet matches key")
                 data.name = encrypt(data.name, data.key)
                 data.port = encrypt(str(data.port), data.key)
                 data.type = encrypt(data.type, data.key)
@@ -286,11 +184,10 @@ def send(prompt):
         try:
             msg = str(input(prompt))
             if msg == "giveINFO":
-                print(f"connections: {CONN_LIST}")
                 print(f"ips found: {IPs_Found}")
                 print(f"connections: {CONN_LIST}")
-                print(f"connections: {CONN_LIST}")
                 continue
+                
             msg =  encrypt(msg, encryption_key)
         except KeyboardInterrupt:
             for sock in CONN_LIST:
@@ -397,8 +294,7 @@ def server(prompt, name):
                 print("[|] person found")
 
             if address[0] == self_ip:
-                if debug:
-                    print("[|] person is me \n")
+                print("[|] person is me \n")
                 gateway_conn.send(active_conn_code.encode())
                 gateway_conn.close()
                 return
