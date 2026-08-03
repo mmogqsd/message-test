@@ -75,7 +75,7 @@ def stop_server():
     if server_sock and server_sock != None:
         server_sock.close()
 
-#gets encryption key (currently just setting to 1 encryption key thats default cuz chatrooms have been buggy for me)
+#gets encryption key (currently just setting to 1 encryption key thats default cuz chatrooms have been buggy for now)
 def get_encryption_key():
     return "EpsteinMogsDiddyAllDay978675645342312u78io0r"
         
@@ -94,7 +94,8 @@ def listen_udp(prompt, name):
         if address and address not in IPs_Found and address != self_ip:
             IPs_Found.append(address)
             data = pickle.loads(data)
-            print("received UDP packet")
+            if debug:
+                print("received UDP packet")
             # print(data.key, encryption_key)
             if data.key == encryption_key: 
                 #print("received UDP packet matches key")
@@ -134,7 +135,7 @@ def receive(sock, nameO, prompt):
             if data == disconnect_code:
                 current_input = readline.get_line_buffer()
                 sys.stdout.write("\r\033K")
-                sys.stdout.write(f"\n[-] Peer {nameO} has been kirked out :( \n")
+                sys.stdout.write(f"\n[-] User {nameO} has disconnected \n")
 
                 if "\n" in current_input:
                     current_input = ""
@@ -183,7 +184,7 @@ def send(prompt):
     while True:
         try:
             msg = str(input(prompt))
-            if msg == "giveINFO":
+            if msg == "give_info":
                 print(f"ips found: {IPs_Found}")
                 print(f"connections: {CONN_LIST}")
                 continue
@@ -237,7 +238,6 @@ def connect(address, data, prompt, local_name):
         server_response = sock.recv(1024).decode()
         server_response = encrypt(server_response, encryption_key)
         
-        #temporary debug
         if debug:
             print(server_response)
 
@@ -335,7 +335,8 @@ def server(prompt, name):
             code = str(code)
             code = encrypt(code, encryption_key)
             
-            print("server sent response")
+            if debug: 
+                print("server sent response")
 
             gateway_conn.send(code.encode())
             gateway_conn.close()
