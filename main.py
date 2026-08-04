@@ -274,7 +274,7 @@ def connect(address, data, prompt, local_name):
             sys.stdout.flush()
             readline.redisplay()
 
-            threading.Thread(target=receive, args=(dedicated_sock, nameO, prompt), daemon=True).start()
+            threading.Thread(target=receive, args=(dedicated_sock, nameO, prompt, local_name), daemon=True).start()
             
     except Exception as e:
         print(e)
