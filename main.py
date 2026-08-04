@@ -410,7 +410,7 @@ def main():
             print("  config debug [true/false]")
             print("  start\n")
 
-            print("  :[user] to 'ping' them
+            print("  :[user] to 'ping' them")
             print("    this will also make the text bold")
             print("    you can type text after the ping")
             print("    :all pings everyone")
