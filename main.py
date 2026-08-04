@@ -1,5 +1,7 @@
 #script uses udp broadcasts and a dedicated host port to connect clients with a mesh topology
 
+import subprocess
+
 #for rec
 import struct
 import pickle
@@ -25,6 +27,8 @@ incremented_port = 5631
 CONN_LIST = []
 debug = True
 
+    
+
 encryption_key = ""
 
 mcast_ip = "224.0.0.251"
@@ -33,9 +37,8 @@ upd_port = 56302
 ttl = 10
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
-
 config_path = os.path.join(project_dir, 'config.json')
-
+notify_path = os.path.join(project_dir, 'simple_notification.scpt')
 
 
 data_list = []
@@ -123,7 +126,7 @@ def send_udp(prompt, name, packet):
 
 
 #thread for receiving data
-def receive(sock, nameO, prompt):
+def receive(sock, nameO, prompt, own_name):
     while True:
         try:
             data = sock.recv(1024).decode()
@@ -151,6 +154,13 @@ def receive(sock, nameO, prompt):
                 
                 return
                 
+            if data.startswith(f":{own_name} ") or data.startswith(f":all "):
+                data = data.split(" ", 1)
+                data = data[1] if len(data) > 0 else ""
+                data = f"\033[1m{data}\033[0m"
+                command = ['osascript', notify_path, f"Mentioned by {nameO}"]
+                subprocess.run(command, capture_output=True, text=True, check=True)
+
 
             current_input = readline.get_line_buffer()
             
@@ -257,7 +267,7 @@ def connect(address, data, prompt, local_name):
             dedicated_sock.send(local_name.encode())
             
             CONN_LIST.append(dedicated_sock)
-            print(f"[+] connected to {nameO} on shifted port {routed_port}!")
+            print(f"[+] connected to {nameO} on port {routed_port}")
             sys.stdout.write("\r\033[K")
 
             sys.stdout.write(prompt)
@@ -354,8 +364,8 @@ def server(prompt, name):
                     nameO = conn.recv(1024).decode()
                     
                     CONN_LIST.append(conn)
-                    print(f"\n[+] Peer successfully routed and established on dedicated port {target_port}")
-                    threading.Thread(target=receive, args=(conn, nameO, prompt), daemon=True).start()
+                    print(f"\n[+] connected to {nameO} on port {target_port}")
+                    threading.Thread(target=receive, args=(conn, nameO, prompt, name), daemon=True).start()
                     dedicated_sock.close() 
                 except:
                     dedicated_sock.close()
