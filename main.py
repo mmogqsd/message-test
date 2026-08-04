@@ -390,7 +390,7 @@ def main():
         except:
             pass
 
-    print("Type start to 'start' or 'help' for commands")
+    print("Type 'start' to begin or 'help' for commands")
 
     while True:
         try:
@@ -409,6 +409,11 @@ def main():
             print("  config interval [value]")
             print("  config debug [true/false]")
             print("  start\n")
+
+            print("  :[user] to 'ping' them
+            print("    this will also make the text bold")
+            print("    you can type text after the ping")
+            print("    :all pings everyone")
             
         elif user_cmd.startswith("config port "):
             try:
