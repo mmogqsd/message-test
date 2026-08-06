@@ -439,9 +439,28 @@ def main():
         json.dump(config_payload, f, indent=4)
 
     try:
-        name = input("display as: ") 
+        while True:
+            name = input("display as: ").strip()
+
+            # no spaces allowed
+            if " " in name:
+                print("no spaces")
+                continue
+
+            # max length 20
+            if len(name) > 20:
+                print("less than 20 characters")
+                continue
+
+            # must not be empty
+            if len(name) == 0:
+                print("needs characters :(")
+                continue
+
+            break
+
     except KeyboardInterrupt:
-        close_sockets
+        close_sockets()
         sys.exit()
 
     encryption_key = get_encryption_key()
