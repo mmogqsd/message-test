@@ -15,9 +15,6 @@ import sys
 import json
 import os
 
-IPs_Found = []
-interval = 5.3
-
 discovery_code = "DISCOVERY_PACKET"
 disconnect_code = "CLIENT_DISCONNECT" 
 
@@ -90,12 +87,13 @@ def listen_udp(prompt, name):
     while True:
         try:
             data, address = udp_sock.recvfrom(1024)
-        except:
+        except Exception as e:
+            if debug:
+                print(f"receive thread has an exception: {e}")
             break
 
         address = address[0]
-        if address and address not in IPs_Found and address != self_ip:
-            IPs_Found.append(address)
+        if address and address != self_ip:
             data = pickle.loads(data)
             if debug:
                 print("received UDP packet")
@@ -148,7 +146,6 @@ def receive(sock, nameO, prompt, own_name):
 
                 readline.redisplay()
                 
-                IPs_Found.remove(sock.getsockname()[0])
                 CONN_LIST.remove(sock)
                 sock.close()
                 
@@ -195,7 +192,6 @@ def send(prompt):
         try:
             msg = str(input(prompt))
             if msg == "give_info":
-                print(f"ips found: {IPs_Found}")
                 print(f"connections: {CONN_LIST}")
                 continue
                 
@@ -237,6 +233,7 @@ def connect(address, data, prompt, local_name):
                     readline.redisplay()
                 return False
         except:
+            sys.stdout.write(f"[?] Not allowing connection to {name} because there is already an active connection")
             pass
 
     try:
@@ -324,13 +321,6 @@ def server(prompt, name):
                 except:
                     pass
 
-            for ip in IPs_Found:
-                try:
-                    if ip == address[0]:
-                        already_connected = True
-                        break
-                except:
-                    pass
 
             if already_connected:
                 gateway_conn.send(active_conn_code.encode())
@@ -377,7 +367,7 @@ def server(prompt, name):
 
 
 def main():
-    global port, incremented_port, interval, debug, encryption_key
+    global port, incremented_port, debug, encryption_key
     
     if os.path.exists(config_path):
         try:
@@ -385,7 +375,6 @@ def main():
                 saved_data = json.load(f)
                 port = saved_data.get("port", port)
                 incremented_port = saved_data.get("incremented_port", incremented_port)
-                interval = saved_data.get("interval", interval)
                 debug = saved_data.get("debug", debug)
         except:
             pass
@@ -406,7 +395,6 @@ def main():
             print("Commands:")
             print("  config port [value]")
             print("  config Nport [value]")
-            print("  config interval [value]")
             print("  config debug [true/false]")
             print("  start\n")
 
@@ -429,13 +417,6 @@ def main():
             except:
                 print("Invalid Nport number format.")
                 
-        elif user_cmd.startswith("config interval "):
-            try:
-                interval = float(user_cmd.split(" ")[2])
-                print(f"[Config Updated] interval set to: {interval}")
-            except:
-                print("Invalid interval number format.")
-
         elif user_cmd.startswith("config debug "):
             val = user_cmd.split(" ")[2].lower()
             if val == "true":
@@ -452,7 +433,6 @@ def main():
     config_payload = {
         "port": port,
         "incremented_port": incremented_port,
-        "interval": interval,
         "debug": debug
     }
     with open(config_path, "w") as f:
