@@ -1,6 +1,5 @@
 {
     "port": 5630,
     "incremented_port": 5631,
-    "interval": 3,
     "debug": false
 }
