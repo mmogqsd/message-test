@@ -108,19 +108,24 @@ def listen_udp(prompt, name):
                     print(f"\n[|] client data receievd from {address}: {data}")
                 threading.Thread(target=connect, args=(address, data, prompt, name), daemon=True).start()
 
-#sends packet over udp multicast group
-def send_udp(prompt, name, packet):
+#encrypts and sends packet over udp multicast group
+def encrypt_udp(prompt, name, packet):
+    global info, udp_sending_sock
     packet.name = encrypt(packet.name, packet.key)
     packet.port = encrypt(str(packet.port), packet.key)
     packet.type = encrypt(packet.type, packet.key)
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
-    message = pickle.dumps(packet)
+    udp_sending_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    udp_sending_sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
 
+    
+    info = pickle.dumps(packet)
+    send_udp()
 
+#sends packet over udp multicast group(only used for :resend command at the moment)
+def send_udp():
+    udp_sending_sock.sendto(info, (mcast_group, upd_port))
 
-    sock.sendto(message, (mcast_group, upd_port))
 
 
 #thread for receiving data
@@ -191,8 +196,11 @@ def send(prompt):
     while True:
         try:
             msg = str(input(prompt))
-            if msg == "give_info":
+            if msg == ":give_info":
                 print(f"connections: {CONN_LIST}")
+                continue
+            if msg == ":resend":
+                send_udp()
                 continue
                 
             msg =  encrypt(msg, encryption_key)
@@ -367,7 +375,7 @@ def server(prompt, name):
 
 
 def main():
-    global port, incremented_port, debug, encryption_key
+    global port, incremented_port, debug, encryption_key, upd_packet
     
     if os.path.exists(config_path):
         try:
@@ -402,6 +410,8 @@ def main():
             print("    this will also make the text bold")
             print("    you can type text after the ping")
             print("    :all pings everyone")
+
+            print("  :resend to send the initial discovery packet again")
             
         elif user_cmd.startswith("config port "):
             try:
@@ -442,17 +452,17 @@ def main():
         while True:
             name = input("display as: ").strip()
 
-            # no spaces allowed
+
             if " " in name:
                 print("no spaces")
                 continue
 
-            # max length 20
+
             if len(name) > 20:
                 print("less than 20 characters")
                 continue
 
-            # must not be empty
+
             if len(name) == 0:
                 print("needs characters :(")
                 continue
@@ -470,7 +480,7 @@ def main():
     upd_packet = packet(port, name, discovery_code, encryption_key)
     threading.Thread(target=listen_udp, args=(prompt, name), daemon=True).start()
     threading.Thread(target=server, args=(prompt, name), daemon=True).start()
-    threading.Thread(target=send_udp, args=(prompt, name, upd_packet), daemon=True).start()
+    threading.Thread(target=encrypt_udp, args=(prompt, name, upd_packet), daemon=True).start()
 
 
 
